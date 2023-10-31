@@ -21,7 +21,7 @@ timeout: 10 # Таймаут (в секундах) між запитами до 
 
 ```bash
 git clone https://github.com/bovada_football_parser.git
-cd jammer
+cd bovada_football_parser
 pip install -r requirements.txt
 python run.py
 ```
