@@ -39,16 +39,12 @@ class Parser(TLS_Session):
     def setup_proxy(self, proxy: str) -> None:
         """Function for setting up proxy"""
 
-        try:
-            ip, port, user, password = proxy.split(":")
-            proxy_str = f"http://{user}:{password}@{ip}:{port}"
-            self.proxies: dict = {
-                "http": proxy_str,
-                "https": proxy_str,
-            }
-
-        except ValueError:
-            raise TLSSessionError("Proxy must be in format ip:port:user:password")
+        ip, port, user, password = proxy.split(":")
+        proxy_str = f"http://{user}:{password}@{ip}:{port}"
+        self.proxies: dict = {
+            "http": proxy_str,
+            "https": proxy_str,
+        }
 
     @staticmethod
     def get_random_client_identifier() -> str:
