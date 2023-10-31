@@ -210,7 +210,7 @@ class Parser(TLS_Session):
                 events: list[FootballEventsList] = self.get_additional_bets(events)
 
                 self.export_events_to_json(events, "../output.json")
-                logger.info(f"Exported events to output.json")
+                logger.info(f"Events exported to output.json")
 
                 logger.debug(f"Sleeping for {self.timeout} seconds..\n")
                 time.sleep(self.timeout)
