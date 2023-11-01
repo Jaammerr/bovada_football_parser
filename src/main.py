@@ -125,36 +125,20 @@ class Parser(TLS_Session):
 
         return events
 
-    @staticmethod
-    def export_events_to_json(
-        events: List[FootballEventsList], output_file: str
-    ) -> None:
-        """Function for exporting events to json file"""
 
+    @staticmethod
+    def export_events_to_json(events: List[FootballEventsList], output_file: str) -> None:
         exported_data = []
+
         for event_list in events:
-            """We need to combine events and additionalEvents lists into one list for more convenient work with data"""
             all_events = event_list.events + event_list.additionalEvents
 
             for event in all_events:
-                event_info = {
-                    "path": {
-                        "id": event_list.path[0].id,
-                        "link": event_list.path[0].link,
-                        "description": event_list.path[0].description,
-                        "type": event_list.path[0].type,
-                        "sportCode": event_list.path[0].sportCode,
-                    },
-                    "id": event.id,
-                    "link": event.link,
-                    "sport": event.sport,
-                    "startTime": event.startTime,
-                    "live": event.live,
-                    "competitors": [
-                        {"_id": comp.id, "name": comp.name, "home": comp.home}
-                        for comp in event.competitors
-                    ],
-                    "displayGroups": [
+                """If event already exists in exported_data, we add new displayGroups to it (another bets)"""
+                existing_event = next((el for el in exported_data if el["id"] == event.id), None)
+
+                if existing_event:
+                    new_displayGroups = [
                         {
                             "id": group.id,
                             "description": group.description,
@@ -186,9 +170,63 @@ class Parser(TLS_Session):
                             ],
                         }
                         for group in event.displayGroups
-                    ],
-                }
-                exported_data.append(event_info)
+                    ]
+
+                    existing_event["displayGroups"].extend(new_displayGroups)
+
+                else:
+                    event_info = {
+                        "path": {
+                            "id": event_list.path[0].id,
+                            "link": event_list.path[0].link,
+                            "description": event_list.path[0].description,
+                            "type": event_list.path[0].type,
+                            "sportCode": event_list.path[0].sportCode,
+                        },
+                        "id": event.id,
+                        "link": event.link,
+                        "sport": event.sport,
+                        "startTime": event.startTime,
+                        "live": event.live,
+                        "competitors": [
+                            {"_id": comp.id, "name": comp.name, "home": comp.home}
+                            for comp in event.competitors
+                        ],
+                        "displayGroups": [
+                            {
+                                "id": group.id,
+                                "description": group.description,
+                                "markets": [
+                                    {
+                                        "id": market.id,
+                                        "description": market.description,
+                                        "outcomes": [
+                                            {
+                                                "id": outcome.id,
+                                                "description": outcome.description,
+                                                "status": outcome.status,
+                                                "type": outcome.type,
+                                                "price": {
+                                                    "id": outcome.price.id,
+                                                    "handicap": outcome.price.handicap,
+                                                    "american": outcome.price.american,
+                                                    "decimal": outcome.price.decimal,
+                                                    "fractional": outcome.price.fractional,
+                                                    "malay": outcome.price.malay,
+                                                    "indonesian": outcome.price.indonesian,
+                                                    "hongkong": outcome.price.hongkong,
+                                                },
+                                            }
+                                            for outcome in market.outcomes
+                                        ],
+                                    }
+                                    for market in group.markets
+                                ],
+                            }
+                            for group in event.displayGroups
+                        ],
+                    }
+                    exported_data.append(event_info)
 
         with open(output_file, "w", encoding="utf-8") as json_file:
             json.dump(exported_data, json_file, ensure_ascii=False, indent=4)
@@ -205,7 +243,7 @@ class Parser(TLS_Session):
                 logger.info(f"Getting additional bets for events..")
                 events: list[FootballEventsList] = self.get_additional_bets(events)
 
-                self.export_events_to_json(events, "../output.json")
+                self.export_events_to_json(events, "./output.json")
                 logger.info(f"Events exported to output.json")
 
                 logger.debug(f"Sleeping for {self.timeout} seconds..\n")
